@@ -1,3 +1,4 @@
+import os
 
 def hauteur(noeud):
     """
@@ -132,6 +133,32 @@ class Node:
 # -------------------------------------------------------------------
 
 class AVL:
+    def reader(self):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(base_dir, "../input.txt")
+
+        try:
+            with open(file_path, "r") as f:
+                # Lire tout le contenu et découper par espaces et retours à la ligne
+                data = f.read().split()
+                data = [int(x) for x in data]  # convertir en entiers
+
+            # Lecture séquentielle
+            idx = 0
+            n = data[idx]; idx += 1
+            stock_id = data[idx:idx+n]
+            idx += n
+
+            m = data[idx]; idx += 1
+            stock_search = data[idx:idx+m]
+
+        except FileNotFoundError:
+            print(f"Erreur d'ouverture du fichier : {file_path}")
+        except Exception as e:
+            print(f"Erreur inattendue : {e}")
+
+        return stock_id, stock_search
+
     def __init__(self):
         self.racine = None
 
@@ -196,24 +223,10 @@ class AVL:
         # Cas 4: On a atteint le bas de l'arbre (None) sans trouver la valeur
         return False
 
-ma_liste = [10, 5, 7, 20, 30, 25]
-mon_arbre = AVL()
-
-print(f"Insertion de la liste : {ma_liste}\n")
-
-for i, valeur in enumerate(ma_liste):
-    print(f"--- Étape {i+1}: Insertion de {valeur} ---")
-    mon_arbre.insererAVL(valeur)
-    print(mon_arbre) # Affiche l'état de l'arbre après chaque insertion
-
-print("\n--- RÉSULTAT FINAL ---")
-print(mon_arbre)
-
-
 # --- Création de l'arbre ---
-ma_liste = [179278730, 104809619, 985333830 ,45071721 ,791388923 ,851126821, 925595932, 731651025, 164547517 ,418230322, 671913127, 492699433 ,358492424, 552437331 ,477968220 ,612175229 ,298754526 ,806120136]
 mon_arbre = AVL()
-for valeur in ma_liste:
+id_list, search_list = mon_arbre.reader()
+for valeur in id_list:
     mon_arbre.insererAVL(valeur)
 
 print("Arbre final construit :")
@@ -228,7 +241,7 @@ else:
     print(f"Résultat : La valeur {valeur_a_trouver} n'est pas dans l'arbre.")
 '''
 
-for i in (ma_liste):
+for i in (search_list):
     if mon_arbre.rechercher(i):
         print("YES")
     else:
