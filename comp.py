@@ -1,4 +1,5 @@
 import os
+import time
 
 def hauteur(noeud):
     """
@@ -135,15 +136,13 @@ class Node:
 class AVL:
     def reader(self):
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(base_dir, "../input.txt")
+        file_path = os.path.join(base_dir, "../library_input.txt")
 
         try:
             with open(file_path, "r") as f:
-                # Lire tout le contenu et découper par espaces et retours à la ligne
                 data = f.read().split()
-                data = [int(x) for x in data]  # convertir en entiers
+                data = [int(x) for x in data]
 
-            # Lecture séquentielle
             idx = 0
             n = data[idx]; idx += 1
             stock_id = data[idx:idx+n]
@@ -229,8 +228,8 @@ id_list, search_list = mon_arbre.reader()
 for valeur in id_list:
     mon_arbre.insererAVL(valeur)
 
-print("Arbre final construit :")
-print(mon_arbre)
+# print("Arbre final construit :")
+# print(mon_arbre)
 
 '''
 # 1. Chercher une valeur qui existe
@@ -241,8 +240,16 @@ else:
     print(f"Résultat : La valeur {valeur_a_trouver} n'est pas dans l'arbre.")
 '''
 
+start_time = time.perf_counter()
+
 for i in (search_list):
     if mon_arbre.rechercher(i):
         print("YES")
     else:
         print("NO") 
+
+end_time = time.perf_counter()    # point de fin
+
+elapsed_time = end_time - start_time
+print(f"\nExecution time: {elapsed_time:.6f} seconds")
+
