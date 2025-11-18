@@ -12,6 +12,7 @@
 char* readline();
 char* ltrim(char*);
 char* rtrim(char*);
+char** split_string(char*);
 
 int parse_int(char*);
 
@@ -19,15 +20,11 @@ int parse_int(char*);
 
 int main()
 {
-    int n = parse_int(ltrim(rtrim(readline())));
+    char** first_multiple_input = split_string(rtrim(readline()));
 
-    for (int n_itr = 0; n_itr < n; n_itr++) {
-        int x = parse_int(ltrim(rtrim(readline())));
+    int D = parse_int(*(first_multiple_input + 0));
 
-        // Write your code here
-    }
-
-    // Write your code here
+    int S = parse_int(*(first_multiple_input + 1));
 
     return 0;
 }
@@ -118,6 +115,27 @@ char* rtrim(char* str) {
     *(end + 1) = '\0';
 
     return str;
+}
+
+char** split_string(char* str) {
+    char** splits = NULL;
+    char* token = strtok(str, " ");
+
+    int spaces = 0;
+
+    while (token) {
+        splits = realloc(splits, sizeof(char*) * ++spaces);
+
+        if (!splits) {
+            return splits;
+        }
+
+        splits[spaces - 1] = token;
+
+        token = strtok(NULL, " ");
+    }
+
+    return splits;
 }
 
 int parse_int(char* str) {
