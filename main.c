@@ -1,73 +1,61 @@
 #include <stdio.h>
 #include <stdlib.h>
+// (Les autres includes et fonctions parse_int/readline sont masqués ici mais sont supposés exister dans votre environnement)
 
-// Fonction de comparaison pour qsort (Tri Décroissant)
-// Retourne une valeur positive si b > a, négative si a > b
-int compareDesc(const void *a, const void *b) {
+// --- A AJOUTER AVANT LE MAIN ---
+
+// Fonction de comparaison pour le tri décroissant (qsort)
+int compare_desc(const void *a, const void *b) {
     long long valA = *(const long long *)a;
     long long valB = *(const long long *)b;
-
     if (valA < valB) return 1;
     if (valA > valB) return -1;
     return 0;
 }
 
-int main() {
-    // Redirection de l'entrée standard pour lire le fichier input.txt
-    // Cela permet d'utiliser scanf comme si on tapait au clavier
-    if (freopen("input.txt", "r", stdin) == NULL) {
-        fprintf(stderr, "Erreur : Impossible d'ouvrir input.txt\n");
-        return 1;
+int main()
+{
+    int n = parse_int(ltrim(rtrim(readline())));
+
+    // --- VOTRE CODE ICI (Allocation) ---
+    // On alloue un tableau pour stocker toutes les caisses
+    long long *crates = malloc(n * sizeof(long long));
+    long long total_sum = 0;
+
+    for (int n_itr = 0; n_itr < n; n_itr++) {
+        int x = parse_int(ltrim(rtrim(readline())));
+
+        // --- VOTRE CODE ICI (Lecture) ---
+        crates[n_itr] = x; // On stocke la valeur
+        total_sum += x;    // On l'ajoute au total
     }
 
-    int N;
-    // Lecture de N (première ligne)
-    if (scanf("%d", &N) != 1) return 0;
+    // --- VOTRE CODE ICI (Logique Gloutonne) ---
 
-    // Allocation dynamique de mémoire pour le tableau (N <= 10^6)
-    // Utilisation de long long car les valeurs vont jusqu'à 10^9
-    long long *crates = (long long *)malloc(N * sizeof(long long));
-    if (crates == NULL) {
-        fprintf(stderr, "Erreur d'allocation mémoire\n");
-        return 1;
-    }
+    // 1. Trier le tableau en ordre décroissant
+    qsort(crates, n, sizeof(long long), compare_desc);
 
-    long long totalSum = 0;
+    long long current_sum = 0;
+    int k = 0;
 
-    // Lecture des caisses
-    for (int i = 0; i < N; i++) {
-        scanf("%lld", &crates[i]); // %lld est le format pour long long
-        totalSum += crates[i];
-    }
-
-    // Tri du tableau en ordre décroissant (les plus grands en premier)
-    // Complexité : O(N log N)
-    qsort(crates, N, sizeof(long long), compareDesc);
-
-    long long currentSum = 0;
-    int count = 0;
-
-    // Algorithme Glouton
-    // On détermine combien de caisses (k) il faut prendre
-    for (int i = 0; i < N; i++) {
-        currentSum += crates[i];
-        count++; // On prend cette caisse
-
-        // Condition : somme choisie > somme restante
-        // (Somme restante = totalSum - currentSum)
-        if (currentSum > (totalSum - currentSum)) {
-            break; // On a trouvé le minimum nécessaire
+    // 2. Sélectionner les caisses jusqu'à dépasser la moitié du total
+    for (int i = 0; i < n; i++) {
+        current_sum += crates[i];
+        k++; // On compte cette caisse
+        
+        // Si la somme actuelle est > au reste (total - actuel)
+        if (current_sum > total_sum - current_sum) {
+            break; 
         }
     }
 
-    // Affichage du résultat
-    printf("%d\n", count); // Ligne 1 : le nombre k
-    
-    for (int i = 0; i < count; i++) {
-        printf("%lld\n", crates[i]); // Les k valeurs
+    // 3. Afficher le résultat
+    printf("%d\n", k); // Nombre de caisses
+    for(int i = 0; i < k; i++) {
+        printf("%lld\n", crates[i]); // Valeur de chaque caisse
     }
 
-    // Libération de la mémoire
+    // Nettoyage mémoire
     free(crates);
 
     return 0;
