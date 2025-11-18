@@ -1,0 +1,160 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+// Définition des constantes selon les contraintes
+#define MAXN 1000005      // 10^6 + marge
+#define MAXM 4000005      // 2 * 10^6 * 2 (car graphe non orienté) + marge
+#define INF 1e18          // Une valeur "infinie" pour long long
+
+// --- Structure pour la liste d'adjacence (Forward Star) ---
+int head[MAXN];
+int to[MAXM];
+int weight[MAXM];
+int next_edge[MAXM];
+int ecnt = 0;
+
+// --- Tableaux pour Dijkstra ---
+long long dist[MAXN]; // Distance minimale depuis la source
+int parent[MAXN];     // Pour reconstruire le chemin
+int visited[MAXN];    // Marquer les nœuds traités
+
+// --- Structure pour le Tas Min (Min-Heap) ---
+typedef struct {
+    long long d; // distance
+    int u;       // nœud
+} Node;
+
+Node heap[MAXM];
+int heap_size = 0;
+
+// Fonction pour ajouter une arête au graphe
+void add_edge(int u, int v, int w) {
+    ecnt++;
+    to[ecnt] = v;
+    weight[ecnt] = w;
+    next_edge[ecnt] = head[u];
+    head[u] = ecnt;
+}
+
+// --- Fonctions du Tas Min ---
+void push(int u, long long d) {
+    heap_size++;
+    int i = heap_size;
+    while (i > 1) {
+        int p = i / 2;
+        if (heap[p].d <= d) break;
+        heap[i] = heap[p];
+        i = p;
+    }
+    heap[i].u = u;
+    heap[i].d = d;
+}
+
+Node pop() {
+    Node ret = heap[1];
+    Node x = heap[heap_size--];
+    int i = 1;
+    while (2 * i <= heap_size) {
+        int child = 2 * i;
+        if (child < heap_size && heap[child + 1].d < heap[child].d) {
+            child++;
+        }
+        if (heap[child].d >= x.d) break;
+        heap[i] = heap[child];
+        i = child;
+    }
+    heap[i] = x;
+    return ret;
+}
+
+// --- Algorithme de Dijkstra ---
+void dijkstra(int start, int n) {
+    // Initialisation
+    for (int i = 1; i <= n; i++) {
+        dist[i] = -1; // -1 servira d'infini/non visité ici pour simplifier l'init
+        visited[i] = 0;
+        parent[i] = 0;
+    }
+
+    dist[start] = 0;
+    push(start, 0);
+
+    while (heap_size > 0) {
+        Node top = pop();
+        int u = top.u;
+        long long d = top.d;
+
+        // Si on a déjà trouvé un chemin plus court vers u, on ignore
+        if (visited[u]) continue;
+        visited[u] = 1;
+
+        // Parcourir les voisins
+        for (int e = head[u]; e != 0; e = next_edge[e]) {
+            int v = to[e];
+            int w = weight[e];
+
+            // Si dist[v] est infini (-1) ou si on trouve un chemin plus court
+            if (dist[v] == -1 || dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                parent[v] = u; // On note d'où on vient pour reconstruire le chemin
+                push(v, dist[v]);
+            }
+        }
+    }
+}
+
+// --- Affichage du chemin ---
+void print_path(int t) {
+    // Le tableau parent permet de remonter de la cible vers la source.
+    // Pour afficher dans le bon ordre, on stocke dans un tableau temporaire.
+    int path[MAXN];
+    int count = 0;
+    int curr = t;
+
+    while (curr != 0) {
+        path[count++] = curr;
+        curr = parent[curr];
+    }
+
+    // Affichage inverse (de la fin du tableau vers le début)
+    for (int i = count - 1; i >= 0; i--) {
+        printf("%d%s", path[i], (i == 0) ? "" : " ");
+    }
+    printf("\n");
+}
+
+int main() {
+    // Redirection de l'entrée standard vers le fichier input.txt
+    if (freopen("input.txt", "r", stdin) == NULL) {
+        perror("Erreur lors de l'ouverture de input.txt");
+        return 1;
+    }
+
+    int N, M;
+    if (scanf("%d %d", &N, &M) != 2) return 0;
+
+    // Lecture des arêtes
+    for (int i = 0; i < M; i++) {
+        int u, v, w;
+        scanf("%d %d %d", &u, &v, &w);
+        // Le problème implique un graphe non orienté ("connected by links")
+        add_edge(u, v, w);
+        add_edge(v, u, w);
+    }
+
+    int s, t;
+    scanf("%d %d", &s, &t);
+
+    // Exécution de Dijkstra
+    dijkstra(s, N);
+
+    // Sortie
+    // Ligne 1 : Perte de signal totale minimale
+    printf("%lld\n", dist[t]);
+    
+    // Ligne 2 : La séquence des tours
+    print_path(t);
+
+    return 0;
+}
