@@ -1,34 +1,36 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 #include <limits.h>
 
-// Définition des constantes selon les contraintes
-#define MAXN 1000005      // 10^6 + marge
-#define MAXM 4000005      // 2 * 10^6 * 2 (car graphe non orienté) + marge
-#define INF 1e18          // Une valeur "infinie" pour long long
+char* readline();
+char* ltrim(char*);
+char* rtrim(char*);
+char** split_string(char*);
+int parse_int(char*);
 
-// --- Structure pour la liste d'adjacence (Forward Star) ---
+#define MAXN 200005
+#define MAXM 400005
+
 int head[MAXN];
 int to[MAXM];
 int weight[MAXM];
 int next_edge[MAXM];
 int ecnt = 0;
 
-// --- Tableaux pour Dijkstra ---
-long long dist[MAXN]; // Distance minimale depuis la source
-int parent[MAXN];     // Pour reconstruire le chemin
-int visited[MAXN];    // Marquer les nœuds traités
+long long dista[MAXN];
+int parent[MAXN];
+int visited[MAXN];
 
-// --- Structure pour le Tas Min (Min-Heap) ---
 typedef struct {
-    long long d; // distance
-    int u;       // nœud
+    long long d;
+    int u;
 } Node;
 
 Node heap[MAXM];
 int heap_size = 0;
 
-// Fonction pour ajouter une arête au graphe
 void add_edge(int u, int v, int w) {
     ecnt++;
     to[ecnt] = v;
@@ -37,7 +39,6 @@ void add_edge(int u, int v, int w) {
     head[u] = ecnt;
 }
 
-// --- Fonctions du Tas Min ---
 void push(int u, long long d) {
     heap_size++;
     int i = heap_size;
@@ -57,9 +58,8 @@ Node pop() {
     int i = 1;
     while (2 * i <= heap_size) {
         int child = 2 * i;
-        if (child < heap_size && heap[child + 1].d < heap[child].d) {
+        if (child < heap_size && heap[child+1].d < heap[child].d)
             child++;
-        }
         if (heap[child].d >= x.d) break;
         heap[i] = heap[child];
         i = child;
@@ -68,93 +68,121 @@ Node pop() {
     return ret;
 }
 
-// --- Algorithme de Dijkstra ---
 void dijkstra(int start, int n) {
-    // Initialisation
     for (int i = 1; i <= n; i++) {
-        dist[i] = -1; // -1 servira d'infini/non visité ici pour simplifier l'init
+        dista[i] = -1;
         visited[i] = 0;
         parent[i] = 0;
     }
 
-    dist[start] = 0;
+    dista[start] = 0;
     push(start, 0);
 
     while (heap_size > 0) {
         Node top = pop();
         int u = top.u;
-        long long d = top.d;
 
-        // Si on a déjà trouvé un chemin plus court vers u, on ignore
         if (visited[u]) continue;
         visited[u] = 1;
 
-        // Parcourir les voisins
         for (int e = head[u]; e != 0; e = next_edge[e]) {
             int v = to[e];
             int w = weight[e];
 
-            // Si dist[v] est infini (-1) ou si on trouve un chemin plus court
-            if (dist[v] == -1 || dist[u] + w < dist[v]) {
-                dist[v] = dist[u] + w;
-                parent[v] = u; // On note d'où on vient pour reconstruire le chemin
-                push(v, dist[v]);
+            if (dista[v] == -1 || dista[u] + w < dista[v]) {
+                dista[v] = dista[u] + w;
+                parent[v] = u;
+                push(v, dista[v]);
             }
         }
     }
 }
 
-// --- Affichage du chemin ---
 void print_path(int t) {
-    // Le tableau parent permet de remonter de la cible vers la source.
-    // Pour afficher dans le bon ordre, on stocke dans un tableau temporaire.
-    int path[MAXN];
-    int count = 0;
-    int curr = t;
+    int stack[MAXN];
+    int top = 0;
+    int cur = t;
 
-    while (curr != 0) {
-        path[count++] = curr;
-        curr = parent[curr];
+    while (cur != 0) {
+        stack[top++] = cur;
+        cur = parent[cur];
     }
 
-    // Affichage inverse (de la fin du tableau vers le début)
-    for (int i = count - 1; i >= 0; i--) {
-        printf("%d%s", path[i], (i == 0) ? "" : " ");
+    for (int i = top - 1; i >= 0; i--) {
+        printf("%d", stack[i]);
+        if (i > 0) printf(" ");
     }
     printf("\n");
 }
 
 int main() {
-    // Redirection de l'entrée standard vers le fichier input.txt
-    if (freopen("input.txt", "r", stdin) == NULL) {
-        perror("Erreur lors de l'ouverture de input.txt");
-        return 1;
-    }
+    char** first = split_string(rtrim(readline()));
+    int N = parse_int(first[0]);
+    int M = parse_int(first[1]);
 
-    int N, M;
-    if (scanf("%d %d", &N, &M) != 2) return 0;
+    for (int i = 1; i <= N; i++) head[i] = 0;
 
-    // Lecture des arêtes
     for (int i = 0; i < M; i++) {
-        int u, v, w;
-        scanf("%d %d %d", &u, &v, &w);
-        // Le problème implique un graphe non orienté ("connected by links")
+        char** line = split_string(rtrim(readline()));
+        int u = parse_int(line[0]);
+        int v = parse_int(line[1]);
+        int w = parse_int(line[2]);
+
         add_edge(u, v, w);
         add_edge(v, u, w);
     }
 
-    int s, t;
-    scanf("%d %d", &s, &t);
+    char** last = split_string(rtrim(readline()));
+    int s = parse_int(last[0]);
+    int t = parse_int(last[1]);
 
-    // Exécution de Dijkstra
     dijkstra(s, N);
 
-    // Sortie
-    // Ligne 1 : Perte de signal totale minimale
-    printf("%lld\n", dist[t]);
-    
-    // Ligne 2 : La séquence des tours
+    printf("%lld\n", dista[t]);
     print_path(t);
 
     return 0;
+}
+
+char* readline() {
+    size_t size = 1024, len = 0;
+    char* buffer = malloc(size);
+
+    while (1) {
+        char* ptr = buffer + len;
+        if (!fgets(ptr, size - len, stdin)) break;
+        len += strlen(ptr);
+        if (len < size - 1 || buffer[len - 1] == '\n') break;
+        size <<= 1;
+        buffer = realloc(buffer, size);
+    }
+    if (buffer[len - 1] == '\n') buffer[len - 1] = '\0';
+    return buffer;
+}
+
+char* ltrim(char* str) {
+    while (*str && isspace(*str)) str++;
+    return str;
+}
+
+char* rtrim(char* str) {
+    int len = strlen(str) - 1;
+    while (len >= 0 && isspace(str[len])) str[len--] = '\0';
+    return str;
+}
+
+char** split_string(char* str) {
+    char** res = NULL;
+    int count = 0;
+    char* tok = strtok(str, " ");
+    while (tok) {
+        res = realloc(res, sizeof(char*) * (++count));
+        res[count - 1] = tok;
+        tok = strtok(NULL, " ");
+    }
+    return res;
+}
+
+int parse_int(char* s) {
+    return atoi(s);
 }
